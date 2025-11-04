@@ -9,3 +9,4 @@ data/
 init/.init_table_docs_done
 *.py[cod]
 *.pyc
+\experiments\evaluation
