@@ -1,0 +1,246 @@
+﻿question,category,difficulty,ground_truth_sql,generated_sql,exact_match,execution_match,valid_sql,error,generation_time,ground_truth_result,generated_result
+전체 총 매출은 얼마인가요?,revenue_analysis,초급,"SELECT ROUND(SUM(amount), 2) FROM payment;",SELECT SUM(amount) AS total_revenue FROM payment;,False,True,True,,1.9529716968536377,61312.04,61312.04
+고객의 평균 결제 금액은 얼마인가요?,revenue_analysis,초급,"SELECT ROUND(AVG(amount), 2) FROM payment;",SELECT AVG(amount) AS average_payment FROM payment;,False,False,True,,1.6991732120513916,4.20,4.2006056453822965
+일별 평균 매출액은?,revenue_analysis,중급,"SELECT ROUND(AVG(daily_revenue), 2) FROM (SELECT DATE(payment_date) as date, SUM(amount) as daily_revenue FROM payment GROUP BY DATE(payment_date)) sub;","SELECT DATE(payment_date) AS rental_date, AVG(amount) AS average_daily_revenue
+FROM payment
+GROUP BY DATE(payment_date);",False,False,True,,1.4527437686920166,1916.00,"[(datetime.date(2007, 2, 14), Decimal('4.3233333333333333')), (datetime.date(2007, 2, 19), Decimal('4.1641935483870968')), (datetime.date(2007, 2, 20), Decimal('4.1893127147766323')), (datetime.date(2007, 3, 19), Decimal('4.1484786053882726')), (datetime.date(2007, 4, 26), Decimal('4.3950632911392405')), (datetime.date(2007, 4, 8), Decimal('4.3175193798449612')), (datetime.date(2007, 2, 15), Decimal('3.8601298701298701')), (datetime.date(2007, 4, 28), Decimal('4.1829824561403509')), (datetime.date(2007, 3, 17), Decimal('4.1817808219178082')), (datetime.date(2007, 3, 20), Decimal('4.3697054009819967')), (datetime.date(2007, 3, 23), Decimal('4.2054398563734291')), (datetime.date(2007, 3, 21), Decimal('4.2619167904903418')), (datetime.date(2007, 4, 29), Decimal('4.2462500000000000')), (datetime.date(2007, 4, 10), Decimal('4.0937344398340249')), (datetime.date(2007, 5, 14), Decimal('2.8251648351648352')), (datetime.date(2007, 4, 12), Decimal('4.2709734513274336')), (datetime.date(2007, 3, 2), Decimal('4.2857983193277311')), (datetime.date(2007, 4, 27), Decimal('4.1579626749611198')), (datetime.date(2007, 3, 16), Decimal('4.1566666666666667')), (datetime.date(2007, 2, 18), Decimal('4.2250993377483444')), (datetime.date(2007, 4, 7), Decimal('4.2039830508474576')), (datetime.date(2007, 2, 21), Decimal('4.3092488262910798')), (datetime.date(2007, 2, 16), Decimal('4.0928368794326241')), (datetime.date(2007, 3, 18), Decimal('4.3297435897435897')), (datetime.date(2007, 4, 6), Decimal('4.2739506172839506')), (datetime.date(2007, 4, 30), Decimal('4.3660488176964150')), (datetime.date(2007, 3, 1), Decimal('4.1542011834319527')), (datetime.date(2007, 4, 11), Decimal('4.1459829059829060')), (datetime.date(2007, 4, 9), Decimal('4.0230739299610895')), (datetime.date(2007, 4, 5), Decimal('4.2712500000000000')), (datetime.date(2007, 2, 17), Decimal('4.1984805653710247')), (datetime.date(2007, 3, 22), Decimal('4.1655233494363929'))]"
+매출 상위 10% 고객들이 전체 매출에서 차지하는 비율은?,revenue_analysis,고급,"WITH customer_revenue AS (SELECT customer_id, SUM(amount) as total FROM payment GROUP BY customer_id ORDER BY total DESC), top_10_percent AS (SELECT * FROM customer_revenue LIMIT (SELECT CAST(COUNT(*) * 0.1 AS INT) FROM customer_revenue)) SELECT ROUND(SUM(total) * 100.0 / (SELECT SUM(amount) FROM payment), 2) as contribution_pct FROM top_10_percent;","SELECT SUM(p.amount) * 0.1 / (SELECT SUM(amount) FROM payment) AS top_10_percent_ratio
+FROM (
+    SELECT customer_id, SUM(amount) AS amount
+    FROM payment
+    GROUP BY customer_id
+    ORDER BY amount DESC
+    LIMIT (SELECT COUNT(DISTINCT customer_id) * 0.1 FROM payment)
+) AS p;",False,False,True,,3.9731228351593018,14.77,0.01476791507834350317
+결제 금액이 가장 높은 거래 TOP 5는?,revenue_analysis,초급,"SELECT payment_id, customer_id, amount, payment_date FROM payment ORDER BY amount DESC LIMIT 5;",SELECT * FROM payment ORDER BY amount DESC LIMIT 5;,False,False,True,,1.9420106410980225,"[(23757, 116, Decimal('11.99'), datetime.datetime(2007, 3, 21, 22, 2, 26, 996577)), (24553, 195, Decimal('11.99'), datetime.datetime(2007, 3, 23, 20, 47, 59, 996577)), (20403, 362, Decimal('11.99'), datetime.datetime(2007, 3, 21, 21, 57, 24, 996577)), (22650, 204, Decimal('11.99'), datetime.datetime(2007, 3, 22, 22, 17, 22, 996577)), (24866, 237, Decimal('11.99'), datetime.datetime(2007, 3, 2, 20, 46, 39, 996577))]","[(23757, 116, 2, 14763, Decimal('11.99'), datetime.datetime(2007, 3, 21, 22, 2, 26, 996577)), (24553, 195, 2, 16040, Decimal('11.99'), datetime.datetime(2007, 3, 23, 20, 47, 59, 996577)), (20403, 362, 1, 14759, Decimal('11.99'), datetime.datetime(2007, 3, 21, 21, 57, 24, 996577)), (22650, 204, 2, 15415, Decimal('11.99'), datetime.datetime(2007, 3, 22, 22, 17, 22, 996577)), (24866, 237, 2, 11479, Decimal('11.99'), datetime.datetime(2007, 3, 2, 20, 46, 39, 996577))]"
+어떤 장르가 가장 많은 매출을 올렸나요?,revenue_analysis,중급,"SELECT c.name, ROUND(SUM(p.amount), 2) as revenue FROM category c JOIN film_category fc ON c.category_id = fc.category_id JOIN film f ON fc.film_id = f.film_id JOIN inventory i ON f.film_id = i.film_id JOIN rental r ON i.inventory_id = r.inventory_id JOIN payment p ON r.rental_id = p.rental_id GROUP BY c.name ORDER BY revenue DESC LIMIT 1;","SELECT c.name, SUM(p.amount) AS total_revenue
+FROM category c
+JOIN film_category fc ON c.category_id = fc.category_id
+JOIN film f ON fc.film_id = f.film_id
+JOIN inventory i ON f.film_id = i.film_id
+JOIN rental r ON i.inventory_id = r.inventory_id
+JOIN payment p ON r.rental_id = p.rental_id
+GROUP BY c.name
+ORDER BY total_revenue DESC
+LIMIT 1;",False,True,True,,2.7408828735351562,"[('Sports', Decimal('4892.19'))]","[('Sports', Decimal('4892.19'))]"
+매출이 가장 낮은 카테고리 3개는?,revenue_analysis,중급,"SELECT c.name, ROUND(SUM(p.amount), 2) as revenue FROM category c JOIN film_category fc ON c.category_id = fc.category_id JOIN film f ON fc.film_id = f.film_id JOIN inventory i ON f.film_id = i.film_id JOIN rental r ON i.inventory_id = r.inventory_id JOIN payment p ON r.rental_id = p.rental_id GROUP BY c.name ORDER BY revenue ASC LIMIT 3;","SELECT c.name, SUM(p.amount) AS total_sales
+FROM category c
+JOIN film_category fc ON c.category_id = fc.category_id
+JOIN film f ON fc.film_id = f.film_id
+JOIN inventory i ON f.film_id = i.film_id
+JOIN rental r ON i.inventory_id = r.inventory_id
+JOIN payment p ON r.rental_id = p.rental_id
+GROUP BY c.name
+ORDER BY total_sales ASC
+LIMIT 3;",False,True,True,,3.272934675216675,"[('Music', Decimal('3071.52')), ('Travel', Decimal('3227.36')), ('Children', Decimal('3309.39'))]","[('Music', Decimal('3071.52')), ('Travel', Decimal('3227.36')), ('Children', Decimal('3309.39'))]"
+VIP 고객(총 결제액 상위 5%) 명단을 보여주세요,customer_analysis,중급,"SELECT c.customer_id, c.first_name || ' ' || c.last_name as name, ROUND(SUM(p.amount), 2) as total_spent FROM customer c JOIN payment p ON c.customer_id = p.customer_id GROUP BY c.customer_id, c.first_name, c.last_name ORDER BY total_spent DESC LIMIT (SELECT CAST(COUNT(DISTINCT customer_id) * 0.05 AS INT) FROM payment);","SELECT DISTINCT a.first_name, a.last_name
+FROM actor a
+JOIN film_actor fa ON a.actor_id = fa.actor_id
+JOIN film f ON fa.film_id = f.film_id
+JOIN inventory i ON f.film_id = i.film_id
+JOIN rental r ON i.inventory_id = r.inventory_id
+JOIN payment p ON r.rental_id = p.rental_id
+GROUP BY a.actor_id
+HAVING SUM(p.amount) > (SELECT PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY total_amount) FROM (SELECT SUM(amount) AS total_amount FROM payment GROUP BY customer_id) AS subquery);",False,False,True,,3.9364657402038574,"[(148, 'Eleanor Hunt', Decimal('211.55')), (526, 'Karl Seal', Decimal('208.58')), (178, 'Marion Snyder', Decimal('194.61')), (137, 'Rhonda Kennedy', Decimal('191.62')), (144, 'Clara Shaw', Decimal('189.60')), (459, 'Tommy Collazo', Decimal('183.63')), (181, 'Ana Bradley', Decimal('167.67')), (410, 'Curtis Irby', Decimal('167.62')), (236, 'Marcia Dean', Decimal('166.61')), (403, 'Mike Way', Decimal('162.67')), (522, 'Arnold Havens', Decimal('161.68')), (469, 'Wesley Bull', Decimal('158.65')), (470, 'Gordon Allard', Decimal('157.69')), (373, 'Louis Leone', Decimal('156.66')), (259, 'Lena Jensen', Decimal('154.70')), (468, 'Tim Cary', Decimal('154.66')), (462, 'Warren Sherrod', Decimal('152.69')), (372, 'Steve Mackenzie', Decimal('152.68')), (187, 'Brittany Riley', Decimal('151.73')), (550, 'Guy Brownlee', Decimal('151.69')), (176, 'June Carroll', Decimal('151.68')), (532, 'Neil Renner', Decimal('149.69')), (75, 'Tammy Sanders', Decimal('149.61')), (209, 'Tonya Chapman', Decimal('147.71')), (21, 'Michelle Clark', Decimal('146.68')), (26, 'Jessica Hall', Decimal('146.68')), (86, 'Jacqueline Long', Decimal('146.68')), (211, 'Stacey Montgomery', Decimal('146.67')), (346, 'Arthur Simpkins', Decimal('145.70')), (366, 'Brandon Huey', Decimal('145.64'))]","[('Adam', 'Grant'), ('Adam', 'Hopper'), ('Al', 'Garland'), ('Alan', 'Dreyfuss'), ('Albert', 'Johansson'), ('Albert', 'Nolte'), ('Alec', 'Wayne'), ('Angela', 'Hudson'), ('Angela', 'Witherspoon'), ('Angelina', 'Astaire'), ('Anne', 'Cronyn'), ('Audrey', 'Bailey'), ('Audrey', 'Olivier'), ('Bela', 'Walken'), ('Ben', 'Harris'), ('Ben', 'Willis'), ('Bette', 'Nicholson'), ('Bob', 'Fawcett'), ('Burt', 'Dukakis'), ('Burt', 'Posey'), ('Burt', 'Temple'), ('Cameron', 'Streep'), ('Cameron', 'Wray'), ('Cameron', 'Zellweger'), ('Carmen', 'Hunt'), ('Cary', 'Mcconaughey'), ('Cate', 'Harris'), ('Cate', 'Mcqueen'), ('Charlize', 'Dench'), ('Chris', 'Bridges'), ('Chris', 'Depp'), ('Christian', 'Akroyd'), ('Christian', 'Gable'), ('Christian', 'Neeson'), ('Christopher', 'Berry'), ('Christopher', 'West'), ('Cuba', 'Allen'), ('Cuba', 'Birch'), ('Cuba', 'Olivier'), ('Dan', 'Harris'), ('Dan', 'Streep'), ('Dan', 'Torn'), ('Daryl', 'Crawford'), ('Daryl', 'Wahlberg'), ('Debbie', 'Akroyd'), ('Dustin', 'Tautou'), ('Ed', 'Chase'), ('Ed', 'Guiness'), ('Ed', 'Mansfield'), ('Ellen', 'Presley'), ('Elvis', 'Marx'), ('Emily', 'Dee'), ('Ewan', 'Gooding'), ('Fay', 'Kilmer'), ('Fay', 'Winslet'), ('Fay', 'Wood'), ('Frances', 'Day-Lewis'), ('Frances', 'Tomei'), ('Fred', 'Costner'), ('Gary', 'Penn'), ('Gary', 'Phoenix'), ('Gene', 'Hopkins'), ('Gene', 'Mckellen'), ('Gene', 'Willis'), ('Geoffrey', 'Heston'), ('Gina', 'Degeneres'), ('Goldie', 'Brody'), ('Grace', 'Mostel'), ('Greg', 'Chaplin'), ('Gregory', 'Gooding'), ('Greta', 'Keitel'), ('Greta', 'Malden'), ('Groucho', 'Dunst'), ('Groucho', 'Sinatra'), ('Groucho', 'Williams'), ('Harrison', 'Bale'), ('Harvey', 'Hope'), ('Helen', 'Voight'), ('Henry', 'Berry'), ('Humphrey', 'Garland'), ('Humphrey', 'Willis'), ('Ian', 'Tandy'), ('Jada', 'Ryder'), ('James', 'Pitt'), ('Jane', 'Jackman'), ('Jayne', 'Neeson'), ('Jayne', 'Nolte'), ('Jayne', 'Silverstone'), ('Jeff', 'Silverstone'), ('Jennifer', 'Davis'), ('Jessica', 'Bailey'), ('Jim', 'Mostel'), ('Jodie', 'Degeneres'), ('Joe', 'Swank'), ('John', 'Suvari'), ('Johnny', 'Cage'), ('Johnny', 'Lollobrigida'), ('Jon', 'Chase'), ('Jude', 'Cruise'), ('Judy', 'Dean'), ('Julia', 'Barrymore'), ('Julia', 'Fawcett'), ('Julia', 'Mcqueen'), ('Julia', 'Zellweger'), ('Julianne', 'Dench'), ('Karl', 'Berry'), ('Kenneth', 'Hoffman'), ('Kenneth', 'Paltrow'), ('Kenneth', 'Pesci'), ('Kenneth', 'Torn'), ('Kevin', 'Bloom'), ('Kevin', 'Garland'), ('Kim', 'Allen'), ('Kirk', 'Jovovich'), ('Kirsten', 'Akroyd'), ('Kirsten', 'Paltrow'), ('Laura', 'Brody'), ('Laurence', 'Bullock'), ('Lisa', 'Monroe'), ('Liza', 'Bergman'), ('Lucille', 'Dee'), ('Lucille', 'Tracy'), ('Mae', 'Hoffman'), ('Mary', 'Keitel'), ('Mary', 'Tandy'), ('Matthew', 'Carrey'), ('Matthew', 'Johansson'), ('Matthew', 'Leigh'), ('Meg', 'Hawke'), ('Mena', 'Hopper'), ('Mena', 'Temple'), ('Meryl', 'Allen'), ('Meryl', 'Gibson'), ('Michael', 'Bening'), ('Michael', 'Bolger'), ('Michelle', 'Mcconaughey'), ('Milla', 'Keitel'), ('Milla', 'Peck'), ('Minnie', 'Kilmer'), ('Minnie', 'Zellweger'), ('Morgan', 'Hopkins'), ('Morgan', 'Mcdormand'), ('Morgan', 'Williams'), ('Natalie', 'Hopkins'), ('Nick', 'Degeneres'), ('Nick', 'Stallone'), ('Nick', 'Wahlberg'), ('Olympia', 'Pfeiffer'), ('Oprah', 'Kilmer'), ('Parker', 'Goldberg'), ('Penelope', 'Cronyn'), ('Penelope', 'Guiness'), ('Penelope', 'Monroe'), ('Penelope', 'Pinkett'), ('Ralph', 'Cruz'), ('Ray', 'Johansson'), ('Reese', 'Kilmer'), ('Reese', 'West'), ('Renee', 'Ball'), ('Renee', 'Tracy'), ('Richard', 'Penn'), ('Rip', 'Crawford'), ('Rip', 'Winslet'), ('Rita', 'Reynolds'), ('River', 'Dean'), ('Rock', 'Dukakis'), ('Russell', 'Bacall'), ('Russell', 'Close'), ('Russell', 'Temple'), ('Salma', 'Nolte'), ('Sandra', 'Kilmer'), ('Sandra', 'Peck'), ('Scarlett', 'Bening'), ('Scarlett', 'Damon'), ('Sean', 'Guiness'), ('Sean', 'Williams'), ('Sidney', 'Crowe'), ('Sissy', 'Sobieski'), ('Spencer', 'Depp'), ('Spencer', 'Peck'), ('Susan', 'Davis'), ('Sylvester', 'Dern'), ('Thora', 'Temple'), ('Tim', 'Hackman'), ('Tom', 'Mckellen'), ('Tom', 'Miranda'), ('Uma', 'Wood'), ('Val', 'Bolger'), ('Vivien', 'Basinger'), ('Vivien', 'Bergen'), ('Walter', 'Torn'), ('Warren', 'Jackman'), ('Warren', 'Nolte'), ('Whoopi', 'Hurt'), ('Will', 'Wilson'), ('William', 'Hackman'), ('Woody', 'Hoffman'), ('Woody', 'Jolie'), ('Zero', 'Cage')]"
+한 번만 대여하고 이탈한 고객은 몇 명인가요?,customer_analysis,중급,SELECT COUNT(*) FROM customer c WHERE (SELECT COUNT(*) FROM rental r WHERE r.customer_id = c.customer_id) = 1;,"SELECT COUNT(DISTINCT r.customer_id) AS customer_count
+FROM rental r
+GROUP BY r.customer_id
+HAVING COUNT(r.rental_id) = 1;",False,False,True,,9.47059416770935,0,[]
+이메일 주소에 'gmail'이 포함된 고객은 몇 명인가요?,customer_analysis,초급,SELECT COUNT(*) FROM customer WHERE email LIKE '%gmail%';,"SELECT COUNT(*) 
+FROM customer 
+WHERE email LIKE '%gmail%';",True,True,True,,2.524315595626831,0,0
+고객 1인당 평균 생애 가치(LTV)는?,customer_analysis,중급,"SELECT ROUND(AVG(customer_ltv), 2) FROM (SELECT customer_id, SUM(amount) as customer_ltv FROM payment GROUP BY customer_id) sub;","SELECT AVG(payment.amount) AS average_lifetime_value
+FROM payment
+JOIN rental ON payment.rental_id = rental.rental_id
+JOIN inventory ON rental.inventory_id = inventory.inventory_id
+JOIN film ON inventory.film_id = film.film_id;",False,False,True,,2.2083921432495117,102.36,4.2006056453822965
+대여 이력이 없는 고객은 몇 명인가요?,customer_analysis,중급,SELECT COUNT(*) FROM customer c WHERE NOT EXISTS (SELECT 1 FROM rental r WHERE r.customer_id = c.customer_id);,"SELECT COUNT(*) 
+FROM customer 
+WHERE customer_id NOT IN (SELECT DISTINCT customer_id FROM rental);",False,True,True,,1.2449352741241455,0,0
+"주말(토,일)에 대여한 고객 수는?",customer_analysis,중급,"SELECT COUNT(DISTINCT customer_id) FROM rental WHERE EXTRACT(DOW FROM rental_date) IN (0, 6);","SELECT COUNT(DISTINCT rental.customer_id) 
+FROM rental 
+WHERE EXTRACT(DOW FROM rental.rental_date) IN (6, 0);",False,True,True,,1.5871148109436035,599,599
+평균적으로 고객들은 몇 일 만에 영화를 반납하나요?,customer_analysis,중급,"SELECT ROUND(AVG(EXTRACT(EPOCH FROM (return_date - rental_date))/86400), 2) as avg_days FROM rental WHERE return_date IS NOT NULL;","SELECT AVG(DATE_PART('day', return_date - rental_date)) AS average_days_to_return
+FROM rental;",False,False,True,,1.9127171039581299,5.03,4.525944139713763
+활성 고객(active=1)은 몇 명인가요?,customer_analysis,초급,SELECT COUNT(*) FROM customer WHERE active = 1;,SELECT COUNT(*) FROM customer WHERE active = 1;,True,True,True,,1.0494110584259033,584,584
+재고가 5개 미만인 영화는 몇 편인가요?,inventory_operations,중급,SELECT COUNT(DISTINCT f.film_id) FROM film f JOIN inventory i ON f.film_id = i.film_id GROUP BY f.film_id HAVING COUNT(i.inventory_id) < 5;,"SELECT COUNT(*) 
+FROM film f 
+JOIN inventory i ON f.film_id = i.film_id 
+GROUP BY f.film_id 
+HAVING COUNT(i.inventory_id) < 5;",False,False,True,,1.6770484447479248,"[(1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,)]","[(4,), (2,), (4,), (3,), (2,), (2,), (4,), (3,), (4,), (3,), (4,), (3,), (3,), (4,), (2,), (2,), (4,), (3,), (4,), (3,), (3,), (2,), (4,), (4,), (4,), (3,), (4,), (2,), (3,), (2,), (2,), (4,), (4,), (3,), (3,), (2,), (3,), (3,), (3,), (4,), (2,), (3,), (4,), (3,), (2,), (3,), (3,), (4,), (3,), (4,), (4,), (2,), (4,), (3,), (4,), (2,), (4,), (4,), (4,), (4,), (3,), (4,), (4,), (2,), (4,), (4,), (4,), (2,), (4,), (2,), (4,), (2,), (4,), (4,), (2,), (3,), (4,), (4,), (3,), (4,), (2,), (3,), (3,), (2,), (2,), (4,), (2,), (3,), (2,), (3,), (4,), (3,), (4,), (4,), (2,), (4,), (3,), (2,), (2,), (3,), (3,), (3,), (4,), (4,), (3,), (2,), (2,), (4,), (2,), (2,), (3,), (4,), (3,), (2,), (3,), (4,), (2,), (4,), (3,), (4,), (2,), (3,), (3,), (4,), (4,), (3,), (3,), (4,), (4,), (4,), (2,), (3,), (4,), (4,), (3,), (3,), (4,), (4,), (2,), (2,), (2,), (3,), (3,), (2,), (3,), (4,), (2,), (3,), (2,), (3,), (4,), (3,), (4,), (4,), (4,), (2,), (2,), (4,), (4,), (4,), (4,), (3,), (4,), (4,), (4,), (2,), (4,), (4,), (4,), (4,), (3,), (2,), (2,), (4,), (3,), (2,), (3,), (3,), (4,), (3,), (3,), (4,), (2,), (4,), (4,), (2,), (4,), (3,), (3,), (4,), (3,), (4,), (3,), (4,), (3,), (4,), (2,), (3,), (2,), (4,), (4,), (2,), (4,), (4,), (3,), (4,), (4,), (2,), (4,), (3,), (4,), (2,), (3,), (3,), (4,), (4,), (2,), (4,), (4,), (4,), (3,), (4,), (2,), (4,), (2,), (4,), (2,), (3,), (2,), (4,), (3,), (3,), (3,), (3,), (2,), (3,), (2,), (4,), (4,), (2,), (4,), (4,), (4,), (3,), (4,), (2,), (2,), (3,), (2,), (3,), (3,), (3,), (4,), (4,), (2,), (2,), (4,), (3,), (2,), (4,), (3,), (3,), (2,), (3,), (4,), (4,), (2,), (3,), (4,), (2,), (2,), (4,), (2,), (4,), (4,), (3,), (2,), (4,), (2,), (3,), (3,), (4,), (2,), (2,), (2,), (2,), (2,), (4,), (2,), (2,), (4,), (4,), (3,), (2,), (4,), (4,), (4,), (2,), (4,), (4,), (4,), (4,), (4,), (2,), (3,), (2,), (4,), (4,), (3,), (3,), (4,), (4,), (4,), (3,), (2,), (2,), (4,), (4,), (3,), (2,), (2,), (3,), (2,), (3,), (3,), (4,), (2,), (2,), (4,), (2,), (2,), (2,), (3,), (4,), (4,), (2,), (3,), (2,), (3,), (3,), (4,), (4,), (2,), (4,), (2,), (4,), (4,), (2,), (4,), (2,), (2,), (3,), (2,), (3,), (4,), (2,), (4,), (4,), (2,), (4,), (3,), (3,), (3,), (4,), (4,), (4,), (3,), (4,), (2,), (3,), (3,), (3,), (4,), (2,), (3,), (4,), (2,), (3,), (2,), (3,), (3,), (3,), (2,), (4,), (4,), (4,), (3,), (4,), (2,), (2,), (2,), (2,), (4,), (4,), (4,), (2,), (2,), (2,), (2,), (2,), (2,), (3,), (4,), (4,), (4,), (4,), (2,), (2,), (3,), (2,), (3,), (4,), (4,), (3,), (2,), (2,), (4,), (3,), (4,), (4,), (4,), (3,), (2,), (4,), (2,), (3,), (4,), (3,), (2,), (4,), (4,), (3,), (4,), (2,), (4,), (3,), (3,), (2,), (4,), (3,), (2,), (3,), (3,), (4,), (2,), (3,), (4,)]"
+각 스토어별 재고 현황은?,inventory_operations,중급,"SELECT s.store_id, COUNT(DISTINCT i.film_id) as unique_films, COUNT(i.inventory_id) as total_inventory FROM store s JOIN inventory i ON s.store_id = i.store_id GROUP BY s.store_id;","SELECT s.store_id, COUNT(i.inventory_id) AS stock_count
+FROM store s
+JOIN inventory i ON s.store_id = i.store_id
+GROUP BY s.store_id;",False,False,True,,1.6891248226165771,"[(1, 759, 2270), (2, 762, 2311)]","[(1, 2270), (2, 2311)]"
+전체 재고(inventory) 수는?,inventory_operations,초급,SELECT COUNT(*) FROM inventory;,SELECT COUNT(*) FROM inventory;,True,True,True,,1.1426787376403809,4581,4581
+반납되지 않은 대여 건수는 몇 건인가요?,inventory_operations,초급,SELECT COUNT(*) FROM rental WHERE return_date IS NULL;,"SELECT COUNT(*) 
+FROM rental 
+WHERE return_date IS NULL;",True,True,True,,1.2481670379638672,183,183
+스태프별 처리한 결제 건수는?,inventory_operations,중급,"SELECT s.first_name || ' ' || s.last_name as staff_name, COUNT(p.payment_id) as payment_count, ROUND(SUM(p.amount), 2) as total_amount FROM staff s JOIN payment p ON s.staff_id = p.staff_id GROUP BY s.staff_id, s.first_name, s.last_name;","SELECT s.staff_id, COUNT(p.payment_id) AS payment_count
+FROM staff s
+LEFT JOIN store st ON s.store_id = st.store_id
+LEFT JOIN payment p ON st.store_id = p.store_id
+GROUP BY s.staff_id;",False,False,False,"(psycopg2.errors.UndefinedColumn) column p.store_id does not exist
+LINE 4: LEFT JOIN payment p ON st.store_id = p.store_id
+                                             ^
+HINT:  Perhaps you meant to reference the column ""s.store_id"".
+
+[SQL: SELECT s.staff_id, COUNT(p.payment_id) AS payment_count
+FROM staff s
+LEFT JOIN store st ON s.store_id = st.store_id
+LEFT JOIN payment p ON st.store_id = p.store_id
+GROUP BY s.staff_id;]
+(Background on this error at: https://sqlalche.me/e/20/f405)",1.7293016910552979,"[('Mike Hillyer', 7292, Decimal('30252.12')), ('Jon Stephens', 7304, Decimal('31059.92'))]",
+주소(address) 테이블에 등록된 주소는 몇 개인가요?,inventory_operations,초급,SELECT COUNT(*) FROM address;,SELECT COUNT(*) FROM store;,False,False,True,,0.9489381313323975,603,2
+오늘 발생한 결제 건수는?,inventory_operations,초급,SELECT COUNT(*) FROM payment WHERE DATE(payment_date) = CURRENT_DATE;,SELECT COUNT(*) FROM payment WHERE DATE(payment_date) = CURRENT_DATE;,True,True,True,,0.8855178356170654,0,0
+대여 기간(rental_duration)이 7일 이상인 영화는 몇 편인가요?,content_performance,초급,SELECT COUNT(*) FROM film WHERE rental_duration >= 7;,"SELECT COUNT(*) 
+FROM film 
+WHERE rental_duration >= 7;",True,True,True,,0.9397673606872559,191,191
+'R' 등급 영화는 몇 편인가요?,content_performance,초급,SELECT COUNT(*) FROM film WHERE rating = 'R';,SELECT COUNT(*) FROM film WHERE rating = 'R';,True,True,True,,1.002603530883789,195,195
+카테고리는 총 몇 개인가요?,content_performance,초급,SELECT COUNT(*) FROM category;,SELECT COUNT(*) FROM category;,True,True,True,,0.951613187789917,16,16
+영화 제목에 'LOVE'가 포함된 영화는 몇 편인가요?,content_performance,초급,SELECT COUNT(*) FROM film WHERE title LIKE '%LOVE%';,"SELECT COUNT(*) 
+FROM film 
+WHERE title ILIKE '%LOVE%';",False,False,True,,0.9402556419372559,0,10
+출연 영화가 가장 많은 배우의 이름은?,content_performance,중급,"SELECT a.first_name || ' ' || a.last_name as actor_name FROM actor a JOIN film_actor fa ON a.actor_id = fa.actor_id GROUP BY a.actor_id, a.first_name, a.last_name ORDER BY COUNT(fa.film_id) DESC LIMIT 1;","SELECT CONCAT(a.first_name, ' ', a.last_name) AS actor_name
+FROM actor a
+JOIN film_actor fa ON a.actor_id = fa.actor_id
+GROUP BY a.actor_id
+ORDER BY COUNT(fa.film_id) DESC
+LIMIT 1;",False,True,True,,1.8529155254364014,Gina Degeneres,Gina Degeneres
+'Horror' 카테고리에 속한 영화의 평균 대여료는?,content_performance,중급,"SELECT ROUND(AVG(f.rental_rate), 2) FROM film f JOIN film_category fc ON f.film_id = fc.film_id JOIN category c ON c.category_id = fc.category_id WHERE c.name = 'Horror';","SELECT AVG(f.rental_rate) AS average_rental_rate
+FROM film f
+JOIN film_category fc ON f.film_id = fc.film_id
+JOIN category c ON fc.category_id = c.category_id
+WHERE c.name = 'Horror';",False,False,True,,1.9749839305877686,3.03,3.0257142857142857
+출연 영화가 10편 이상인 배우는 몇 명인가요?,content_performance,중급,SELECT COUNT(*) FROM actor a WHERE (SELECT COUNT(*) FROM film_actor fa WHERE fa.actor_id = a.actor_id) >= 10;,"SELECT COUNT(DISTINCT a.actor_id) 
+FROM actor a 
+JOIN film_actor fa ON a.actor_id = fa.actor_id 
+GROUP BY a.actor_id 
+HAVING COUNT(fa.film_id) >= 10;",False,False,True,,1.47483491897583,200,"[(1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,)]"
+영화 길이가 120분 이상인 영화는 몇 편인가요?,content_performance,초급,SELECT COUNT(*) FROM film WHERE length >= 120;,"SELECT COUNT(*) 
+FROM film 
+WHERE length >= 120;",True,True,True,,1.1993846893310547,466,466
+'United States'에 있는 도시는 몇 개인가요?,geographic_analysis,중급,SELECT COUNT(*) FROM city ci JOIN country co ON ci.country_id = co.country_id WHERE co.country = 'United States';,"SELECT COUNT(DISTINCT city) 
+FROM store 
+WHERE address_id IN (SELECT address_id FROM address WHERE city IN (SELECT city FROM city WHERE country_id = (SELECT country_id FROM country WHERE country = 'United States')));",False,False,False,"(psycopg2.errors.UndefinedColumn) column ""city"" does not exist
+LINE 1: SELECT COUNT(DISTINCT city) 
+                              ^
+
+[SQL: SELECT COUNT(DISTINCT city) 
+FROM store 
+WHERE address_id IN (SELECT address_id FROM address WHERE city IN (SELECT city FROM city WHERE country_id = (SELECT country_id FROM country WHERE country = 'United States')));]
+(Background on this error at: https://sqlalche.me/e/20/f405)",2.322256326675415,35,
+고객이 없는 도시는 몇 개인가요?,geographic_analysis,중급,SELECT COUNT(*) FROM city ci WHERE NOT EXISTS (SELECT 1 FROM address a JOIN customer c ON a.address_id = c.address_id WHERE a.city_id = ci.city_id);,"SELECT COUNT(*) 
+FROM store 
+WHERE store_id NOT IN (SELECT DISTINCT store_id FROM rental);",False,False,True,,1.1910853385925293,3,0
+가장 많은 고객이 있는 도시는?,geographic_analysis,중급,SELECT ci.city FROM city ci JOIN address a ON ci.city_id = a.city_id JOIN customer c ON a.address_id = c.address_id GROUP BY ci.city ORDER BY COUNT(c.customer_id) DESC LIMIT 1;,"SELECT store.address AS city, COUNT(DISTINCT rental.customer_id) AS customer_count
+FROM store
+JOIN inventory ON store.store_id = inventory.store_id
+JOIN rental ON inventory.inventory_id = rental.inventory_id
+GROUP BY store.address
+ORDER BY customer_count DESC
+LIMIT 1;",False,False,False,"(psycopg2.errors.UndefinedColumn) column store.address does not exist
+LINE 1: SELECT store.address AS city, COUNT(DISTINCT rental.customer...
+               ^
+HINT:  Perhaps you meant to reference the column ""store.address_id"".
+
+[SQL: SELECT store.address AS city, COUNT(DISTINCT rental.customer_id) AS customer_count
+FROM store
+JOIN inventory ON store.store_id = inventory.store_id
+JOIN rental ON inventory.inventory_id = rental.inventory_id
+GROUP BY store.address
+ORDER BY customer_count DESC
+LIMIT 1;]
+(Background on this error at: https://sqlalche.me/e/20/f405)",2.1673128604888916,London,
+국가별 고객 수를 내림차순으로 상위 5개 국가는?,geographic_analysis,중급,"SELECT co.country, COUNT(c.customer_id) as customer_count FROM country co JOIN city ci ON co.country_id = ci.country_id JOIN address a ON ci.city_id = a.city_id JOIN customer c ON a.address_id = c.address_id GROUP BY co.country ORDER BY customer_count DESC LIMIT 5;","SELECT country, COUNT(customer_id) AS customer_count
+FROM customer
+GROUP BY country
+ORDER BY customer_count DESC
+LIMIT 5;",False,False,False,"(psycopg2.errors.UndefinedColumn) column ""country"" does not exist
+LINE 1: SELECT country, COUNT(customer_id) AS customer_count
+               ^
+
+[SQL: SELECT country, COUNT(customer_id) AS customer_count
+FROM customer
+GROUP BY country
+ORDER BY customer_count DESC
+LIMIT 5;]
+(Background on this error at: https://sqlalche.me/e/20/f405)",1.7463688850402832,"[('India', 60), ('China', 53), ('United States', 36), ('Japan', 31), ('Mexico', 30)]",
+요일별 평균 대여 횟수는?,trends_forecasting,중급,"SELECT EXTRACT(DOW FROM rental_date) as day_of_week, COUNT(*) as rental_count FROM rental GROUP BY day_of_week ORDER BY day_of_week;","SELECT EXTRACT(DOW FROM r.rental_date) AS day_of_week, COUNT(r.rental_id) AS average_rentals
+FROM rental r
+GROUP BY day_of_week;",False,False,True,,1.4304344654083252,"[(Decimal('0'), 2320), (Decimal('1'), 2247), (Decimal('2'), 2463), (Decimal('3'), 2231), (Decimal('4'), 2200), (Decimal('5'), 2272), (Decimal('6'), 2311)]","[(Decimal('0'), 2320), (Decimal('6'), 2311), (Decimal('1'), 2247), (Decimal('2'), 2463), (Decimal('3'), 2231), (Decimal('5'), 2272), (Decimal('4'), 2200)]"
+시간대별 대여 횟수는?,trends_forecasting,중급,"SELECT EXTRACT(HOUR FROM rental_date) as hour, COUNT(*) as rental_count FROM rental GROUP BY hour ORDER BY hour;","SELECT EXTRACT(HOUR FROM rental_date) AS hour, COUNT(*) AS rental_count
+FROM rental
+GROUP BY hour
+ORDER BY hour;",True,True,True,,1.6554582118988037,"[(Decimal('0'), 694), (Decimal('1'), 649), (Decimal('2'), 630), (Decimal('3'), 684), (Decimal('4'), 681), (Decimal('5'), 648), (Decimal('6'), 647), (Decimal('7'), 667), (Decimal('8'), 696), (Decimal('9'), 652), (Decimal('10'), 673), (Decimal('11'), 663), (Decimal('12'), 632), (Decimal('13'), 645), (Decimal('14'), 653), (Decimal('15'), 887), (Decimal('16'), 664), (Decimal('17'), 634), (Decimal('18'), 688), (Decimal('19'), 676), (Decimal('20'), 658), (Decimal('21'), 671), (Decimal('22'), 610), (Decimal('23'), 642)]","[(Decimal('0'), 694), (Decimal('1'), 649), (Decimal('2'), 630), (Decimal('3'), 684), (Decimal('4'), 681), (Decimal('5'), 648), (Decimal('6'), 647), (Decimal('7'), 667), (Decimal('8'), 696), (Decimal('9'), 652), (Decimal('10'), 673), (Decimal('11'), 663), (Decimal('12'), 632), (Decimal('13'), 645), (Decimal('14'), 653), (Decimal('15'), 887), (Decimal('16'), 664), (Decimal('17'), 634), (Decimal('18'), 688), (Decimal('19'), 676), (Decimal('20'), 658), (Decimal('21'), 671), (Decimal('22'), 610), (Decimal('23'), 642)]"
+대여 횟수가 5회 이상인 고객은 몇 명인가요?,trends_forecasting,중급,SELECT COUNT(*) FROM (SELECT customer_id FROM rental GROUP BY customer_id HAVING COUNT(*) >= 5) sub;,"SELECT COUNT(DISTINCT rental.customer_id) 
+FROM rental 
+GROUP BY rental.customer_id 
+HAVING COUNT(rental.rental_id) >= 5;",False,False,True,,1.42091965675354,599,"[(1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,), (1,)]"
+대여료가 0.99달러인 영화는 몇 편인가요?,pricing_strategy,초급,SELECT COUNT(*) FROM film WHERE rental_rate = 0.99;,"SELECT COUNT(*) 
+FROM film 
+WHERE rental_rate = 0.99;",True,True,True,,1.085752010345459,341,341
+대여료가 2.99달러 이상인 영화는 몇 편인가요?,pricing_strategy,초급,SELECT COUNT(*) FROM film WHERE rental_rate >= 2.99;,"SELECT COUNT(*) 
+FROM film 
+WHERE rental_rate > 2.99;",False,False,True,,0.9335129261016846,659,336
+교체 비용(replacement_cost)이 20달러 이상인 영화는 몇 편인가요?,pricing_strategy,초급,SELECT COUNT(*) FROM film WHERE replacement_cost >= 20;,"SELECT COUNT(*) 
+FROM film 
+WHERE replacement_cost >= 20;",True,True,True,,1.2027621269226074,486,486
+평균보다 비싼 영화는 몇 편인가요?,pricing_strategy,중급,SELECT COUNT(*) FROM film WHERE rental_rate > (SELECT AVG(rental_rate) FROM film);,"SELECT COUNT(*) 
+FROM film 
+WHERE rental_rate > (SELECT AVG(rental_rate) FROM film);",True,True,True,,1.032590627670288,659,659
+'Drama' 카테고리 영화는 몇 편인가요?,marketing_promotion,중급,SELECT COUNT(*) FROM film f JOIN film_category fc ON f.film_id = fc.film_id JOIN category c ON c.category_id = fc.category_id WHERE c.name = 'Drama';,"SELECT COUNT(*) 
+FROM film f 
+JOIN film_category fc ON f.film_id = fc.film_id 
+JOIN category c ON fc.category_id = c.category_id 
+WHERE c.name = 'Drama';",False,True,True,,1.6444141864776611,62,62
+영화가 가장 적은 카테고리는?,marketing_promotion,중급,SELECT c.name FROM category c JOIN film_category fc ON c.category_id = fc.category_id GROUP BY c.name ORDER BY COUNT(fc.film_id) ASC LIMIT 1;,"SELECT c.name 
+FROM category c 
+JOIN film_category fc ON c.category_id = fc.category_id 
+GROUP BY c.category_id 
+ORDER BY COUNT(fc.film_id) ASC 
+LIMIT 1;",False,True,True,,1.8952233791351318,Music,Music
+특수 기능(special_features)에 'Deleted Scenes'가 포함된 영화는 몇 편인가요?,marketing_promotion,중급,SELECT COUNT(*) FROM film WHERE 'Deleted Scenes' = ANY(special_features);,"SELECT COUNT(*) 
+FROM film 
+WHERE special_features LIKE '%Deleted Scenes%';",False,False,False,"(psycopg2.errors.UndefinedFunction) operator does not exist: text[] ~~ unknown
+LINE 3: WHERE special_features LIKE '%Deleted Scenes%';
+                               ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+[SQL: SELECT COUNT(*) 
+FROM film 
+WHERE special_features LIKE '%%Deleted Scenes%%';]
+(Background on this error at: https://sqlalche.me/e/20/f405)",1.5782132148742676,503,
+같은 날 10회 이상 대여한 고객은?,anomaly_detection,중급,"SELECT customer_id, DATE(rental_date) as date, COUNT(*) as rental_count FROM rental GROUP BY customer_id, DATE(rental_date) HAVING COUNT(*) >= 10;","SELECT customer_id
+FROM rental
+GROUP BY customer_id, rental_date
+HAVING COUNT(*) >= 10;",False,True,True,,1.042818546295166,[],[]
+연체 중인 대여 건수는?,anomaly_detection,초급,SELECT COUNT(*) FROM rental WHERE return_date IS NULL;,SELECT COUNT(*) FROM rental WHERE return_date IS NULL;,True,True,True,,1.0379655361175537,183,183
+전체 결제 건수는?,executive_dashboard,초급,SELECT COUNT(*) FROM payment;,SELECT COUNT(*) FROM payment;,True,True,True,,1.058074951171875,14596,14596
+대여 기록이 있는 고객은 몇 명인가요?,executive_dashboard,초급,SELECT COUNT(DISTINCT customer_id) FROM rental;,"SELECT COUNT(DISTINCT rental.customer_id) AS customer_count
+FROM rental;",False,True,True,,1.1802117824554443,599,599
+재고가 있는 영화는 몇 편인가요?,executive_dashboard,초급,SELECT COUNT(DISTINCT film_id) FROM inventory;,"SELECT COUNT(*) 
+FROM inventory 
+WHERE inventory.film_id IN (SELECT film.id FROM film);",False,False,False,"(psycopg2.errors.UndefinedColumn) column film.id does not exist
+LINE 3: WHERE inventory.film_id IN (SELECT film.id FROM film);
+                                           ^
+
+[SQL: SELECT COUNT(*) 
+FROM inventory 
+WHERE inventory.film_id IN (SELECT film.id FROM film);]
+(Background on this error at: https://sqlalche.me/e/20/f405)",1.420588493347168,958,
+평균보다 긴 영화는 몇 편인가요?,executive_dashboard,중급,SELECT COUNT(*) FROM film WHERE length > (SELECT AVG(length) FROM film);,"SELECT COUNT(*) 
+FROM film 
+WHERE length > (SELECT AVG(length) FROM film);",True,True,True,,1.3476066589355469,489,489
+얼마나 결제를 해야 전체 유저 중에서 상위 10%에 해당할까?,executive_dashboard,고급,"SELECT percentile_disc(0.9) WITHIN GROUP (ORDER BY total_amount) AS top_10_percent_threshold FROM (SELECT customer_id, SUM(amount) AS total_amount FROM payment GROUP BY customer_id) AS customer_totals;","SELECT SUM(amount) AS total_payment
+FROM payment
+WHERE customer_id IN (
+    SELECT customer_id
+    FROM (
+        SELECT customer_id, 
+               NTILE(10) OVER (ORDER BY SUM(amount) DESC) AS percentile
+        FROM payment
+        GROUP BY customer_id
+    ) AS ranked_customers
+    WHERE percentile = 1
+);",False,False,True,,3.1829164028167725,134.69,9054.51

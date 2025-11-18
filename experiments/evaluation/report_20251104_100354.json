@@ -1,0 +1,75 @@
+{
+  "timestamp": "2025-11-04T10:03:54.086886",
+  "total_cases": 51,
+  "metrics": {
+    "exact_match": {
+      "count": 16,
+      "percentage": 31.37
+    },
+    "execution_accuracy": {
+      "count": 26,
+      "percentage": 50.98
+    },
+    "valid_sql": {
+      "count": 45,
+      "percentage": 88.24
+    }
+  },
+  "avg_generation_time": 1.81,
+  "by_category": {
+    "revenue_analysis": {
+      "total": 7,
+      "execution_accuracy": 42.86
+    },
+    "customer_analysis": {
+      "total": 8,
+      "execution_accuracy": 50.0
+    },
+    "inventory_operations": {
+      "total": 7,
+      "execution_accuracy": 42.86
+    },
+    "content_performance": {
+      "total": 8,
+      "execution_accuracy": 62.5
+    },
+    "geographic_analysis": {
+      "total": 4,
+      "execution_accuracy": 0.0
+    },
+    "trends_forecasting": {
+      "total": 3,
+      "execution_accuracy": 33.33
+    },
+    "pricing_strategy": {
+      "total": 4,
+      "execution_accuracy": 75.0
+    },
+    "marketing_promotion": {
+      "total": 3,
+      "execution_accuracy": 66.67
+    },
+    "anomaly_detection": {
+      "total": 2,
+      "execution_accuracy": 100.0
+    },
+    "executive_dashboard": {
+      "total": 5,
+      "execution_accuracy": 60.0
+    }
+  },
+  "by_difficulty": {
+    "초급": {
+      "total": 21,
+      "execution_accuracy": 71.43
+    },
+    "중급": {
+      "total": 28,
+      "execution_accuracy": 39.29
+    },
+    "고급": {
+      "total": 2,
+      "execution_accuracy": 0.0
+    }
+  }
+}
