@@ -2,109 +2,113 @@
 import pandas as pd
 
 data = [
-    # 1. 기본 통계 (10개)
-    ["배우는 총 몇 명인가요?", "SELECT COUNT(*) FROM actor;", 200],
-    ["고객은 총 몇 명인가요?", "SELECT COUNT(*) FROM customer;", 599],
-    ["영화는 총 몇 편인가요?", "SELECT COUNT(*) FROM film;", 1000],
-    ["전체 대여 건수는?", "SELECT COUNT(*) FROM rental;", 16044],
-    ["전체 매출은 얼마인가요?", "SELECT ROUND(SUM(amount), 2) FROM payment;", 61312.04],
-    ["활성 고객은 몇 명인가요?", "SELECT COUNT(*) FROM customer WHERE active = 1;", 584],
-    ["반납되지 않은 대여 건수는?", "SELECT COUNT(*) FROM rental WHERE return_date IS NULL;", 183],
-    ["재고가 있는 영화는 몇 편인가요?", "SELECT COUNT(DISTINCT film_id) FROM inventory;", 958],
-    ["카테고리는 총 몇 개인가요?", "SELECT COUNT(*) FROM category;", 16],
-    ["Store 1과 Store 2의 고객 수 차이는?", "SELECT ABS((SELECT COUNT(*) FROM customer WHERE store_id = 1) - (SELECT COUNT(*) FROM customer WHERE store_id = 2));", 53],
-    
-    # 2. 고객 행동 분석 (15개)
-    ["대여 횟수가 가장 많은 고객의 이름은?", "SELECT first_name || ' ' || last_name FROM customer ORDER BY (SELECT COUNT(*) FROM rental r WHERE r.customer_id = customer.customer_id) DESC LIMIT 1;", "Eleanor Hunt"],
-    ["한 번도 대여하지 않은 고객은 몇 명인가요?", "SELECT COUNT(*) FROM customer WHERE customer_id NOT IN (SELECT DISTINCT customer_id FROM rental);", 0],
-    ["가장 많은 금액을 지불한 고객의 총 결제액은?", "SELECT ROUND(SUM(amount), 2) FROM payment WHERE customer_id = (SELECT customer_id FROM payment GROUP BY customer_id ORDER BY SUM(amount) DESC LIMIT 1);", 211.55],
-    ["주말(토,일)에 대여한 고객 수는?", "SELECT COUNT(DISTINCT customer_id) FROM rental WHERE EXTRACT(DOW FROM rental_date) IN (0, 6);", 599],
-    ["고객당 평균 대여 횟수는?", "SELECT ROUND(COUNT(*)::numeric / COUNT(DISTINCT customer_id), 2) FROM rental;", 26.79],
-    ["이메일 도메인이 'sakilacustomer.org'인 고객 수는?", "SELECT COUNT(*) FROM customer WHERE email LIKE '%sakilacustomer.org';", 599],
-    ["성과 이름이 같은 글자로 시작하는 고객 수는?", "SELECT COUNT(*) FROM customer WHERE LEFT(first_name, 1) = LEFT(last_name, 1);", 27],
-    ["평균 이상으로 대여한 고객은 몇 명인가요?", "SELECT COUNT(*) FROM (SELECT customer_id, COUNT(*) as cnt FROM rental GROUP BY customer_id HAVING COUNT(*) > (SELECT AVG(cnt) FROM (SELECT COUNT(*) as cnt FROM rental GROUP BY customer_id) sub)) sub2;", 284],
-    ["비활성 고객 비율은?", "SELECT ROUND((SELECT COUNT(*) FROM customer WHERE active = 0)::numeric / COUNT(*) * 100, 2) FROM customer;", 2.50],
-    ["결제 없이 대여만 한 고객은 몇 명인가요?", "SELECT COUNT(DISTINCT customer_id) FROM rental WHERE customer_id NOT IN (SELECT DISTINCT customer_id FROM payment);", 0],
-    ["가장 최근에 대여한 고객의 대여 날짜는?", "SELECT MAX(rental_date)::date FROM rental;", "2006-02-14"],
-    ["한 달에 10회 이상 대여한 적이 있는 고객 수는?", "SELECT COUNT(DISTINCT customer_id) FROM (SELECT customer_id, EXTRACT(YEAR FROM rental_date) as year, EXTRACT(MONTH FROM rental_date) as month, COUNT(*) as cnt FROM rental GROUP BY customer_id, year, month HAVING COUNT(*) >= 10) sub;", 393],
-    ["3개 이상의 카테고리 영화를 대여한 고객 수는?", "SELECT COUNT(*) FROM (SELECT r.customer_id FROM rental r JOIN inventory i ON r.inventory_id = i.inventory_id JOIN film_category fc ON i.film_id = fc.film_id GROUP BY r.customer_id HAVING COUNT(DISTINCT fc.category_id) >= 3) sub;", 599],
-    ["가장 오래된 고객 계정은 언제 생성되었나요?", "SELECT MIN(create_date)::date FROM customer;", "2006-02-14"],
-    ["Store 2에서 Store 1보다 고객이 몇 명 적나요?", "SELECT (SELECT COUNT(*) FROM customer WHERE store_id = 1) - (SELECT COUNT(*) FROM customer WHERE store_id = 2);", 53],
-    
-    # 3. 영화 콘텐츠 분석 (15개)
-    ["가장 많은 배우가 출연한 영화의 배우 수는?", "SELECT COUNT(*) FROM film_actor WHERE film_id = (SELECT film_id FROM film_actor GROUP BY film_id ORDER BY COUNT(*) DESC LIMIT 1);", 15],
-    ["배우가 한 명도 없는 영화는 몇 편인가요?", "SELECT COUNT(*) FROM film WHERE film_id NOT IN (SELECT DISTINCT film_id FROM film_actor);", 0],
-    ["평균보다 긴 영화 중 대여료가 평균보다 저렴한 영화는 몇 편인가요?", "SELECT COUNT(*) FROM film WHERE length > (SELECT AVG(length) FROM film) AND rental_rate < (SELECT AVG(rental_rate) FROM film);", 162],
-    ["'PG' 등급이면서 'Action' 카테고리인 영화는 몇 편인가요?", "SELECT COUNT(*) FROM film f JOIN film_category fc ON f.film_id = fc.film_id JOIN category c ON fc.category_id = c.category_id WHERE f.rating = 'PG' AND c.name = 'Action';", 30],
-    ["제목이 'A'로 시작하는 영화 중 가장 긴 영화의 길이는?", "SELECT MAX(length) FROM film WHERE title LIKE 'A%';", 185],
-    ["영화 길이의 표준편차는?", "SELECT ROUND(STDDEV(length)::numeric, 2) FROM film;", 40.43],
-    ["대여료가 정확히 중간값인 영화는 몇 편인가요?", "SELECT COUNT(*) FROM film WHERE rental_rate = (SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY rental_rate) FROM film);", 323],
-    ["제목 길이가 가장 긴 영화의 글자 수는?", "SELECT MAX(LENGTH(title)) FROM film;", 27],
-    ["'R' 등급 영화의 평균 길이가 'G' 등급보다 몇 분 더 긴가요?", "SELECT ROUND((SELECT AVG(length) FROM film WHERE rating = 'R') - (SELECT AVG(length) FROM film WHERE rating = 'G'), 2);", 3.42],
-    ["가장 비싼 대여료와 가장 저렴한 대여료의 비율은?", "SELECT ROUND((SELECT MAX(rental_rate) FROM film) / (SELECT MIN(rental_rate) FROM film), 2);", 5.04],
-    ["영화가 가장 많은 카테고리는?", "SELECT c.name FROM category c JOIN film_category fc ON c.category_id = fc.category_id GROUP BY c.name ORDER BY COUNT(fc.film_id) DESC LIMIT 1;", "Sports"],
-    ["영화가 가장 적은 카테고리는?", "SELECT c.name FROM category c JOIN film_category fc ON c.category_id = fc.category_id GROUP BY c.name ORDER BY COUNT(fc.film_id) ASC LIMIT 1;", "Music"],
-    ["평균 길이가 가장 긴 카테고리는?", "SELECT c.name FROM category c JOIN film_category fc ON c.category_id = fc.category_id JOIN film f ON f.film_id = fc.film_id GROUP BY c.name ORDER BY AVG(f.length) DESC LIMIT 1;", "Sports"],
-    ["평균 대여료가 가장 높은 카테고리는?", "SELECT c.name FROM category c JOIN film_category fc ON c.category_id = fc.category_id JOIN film f ON f.film_id = fc.film_id GROUP BY c.name ORDER BY AVG(f.rental_rate) DESC LIMIT 1;", "Games"],
-    ["가장 많은 영화를 보유한 카테고리와 가장 적은 카테고리의 영화 수 차이는?", "SELECT (SELECT COUNT(*) FROM film_category WHERE category_id = (SELECT category_id FROM film_category GROUP BY category_id ORDER BY COUNT(*) DESC LIMIT 1)) - (SELECT COUNT(*) FROM film_category WHERE category_id = (SELECT category_id FROM film_category GROUP BY category_id ORDER BY COUNT(*) ASC LIMIT 1));", 18],
-    
-    # 4. 재고 및 운영 분석 (15개)
-    ["재고가 가장 많은 영화의 재고 수는?", "SELECT COUNT(*) FROM inventory WHERE film_id = (SELECT film_id FROM inventory GROUP BY film_id ORDER BY COUNT(*) DESC LIMIT 1);", 8],
-    ["재고가 1개뿐인 영화는 몇 편인가요?", "SELECT COUNT(*) FROM (SELECT film_id FROM inventory GROUP BY film_id HAVING COUNT(*) = 1) sub;", 4],
-    ["Store 1과 Store 2의 재고 차이는?", "SELECT ABS((SELECT COUNT(*) FROM inventory WHERE store_id = 1) - (SELECT COUNT(*) FROM inventory WHERE store_id = 2));", 1],
-    ["대여 중인 재고의 비율은?", "SELECT ROUND((SELECT COUNT(*) FROM rental WHERE return_date IS NULL)::numeric / (SELECT COUNT(*) FROM inventory) * 100, 2);", 3.99],
-    ["한 번도 대여되지 않은 재고는 몇 개인가요?", "SELECT COUNT(*) FROM inventory WHERE inventory_id NOT IN (SELECT DISTINCT inventory_id FROM rental);", 0],
-    ["평균 이상으로 대여된 영화는 몇 편인가요?", "SELECT COUNT(*) FROM (SELECT i.film_id, COUNT(*) as cnt FROM inventory i JOIN rental r ON i.inventory_id = r.inventory_id GROUP BY i.film_id HAVING COUNT(*) > (SELECT AVG(cnt) FROM (SELECT COUNT(*) as cnt FROM inventory i2 JOIN rental r2 ON i2.inventory_id = r2.inventory_id GROUP BY i2.film_id) sub)) sub2;", 477],
-    ["재고가 없는 영화는 몇 편인가요?", "SELECT COUNT(*) FROM film WHERE film_id NOT IN (SELECT DISTINCT film_id FROM inventory);", 42],
-    ["대여가 한 번도 이루어지지 않은 영화는 몇 편인가요?", "SELECT COUNT(*) FROM film f WHERE NOT EXISTS (SELECT 1 FROM inventory i JOIN rental r ON i.inventory_id = r.inventory_id WHERE i.film_id = f.film_id);", 42],
-    ["가장 많이 대여된 영화의 제목은?", "SELECT f.title FROM film f JOIN inventory i ON f.film_id = i.film_id JOIN rental r ON i.inventory_id = r.inventory_id GROUP BY f.title ORDER BY COUNT(r.rental_id) DESC LIMIT 1;", "Bucket Brotherhood"],
-    ["가장 많이 대여된 영화의 대여 횟수는?", "SELECT COUNT(*) FROM rental r JOIN inventory i ON r.inventory_id = i.inventory_id WHERE i.film_id = (SELECT i2.film_id FROM inventory i2 JOIN rental r2 ON i2.inventory_id = r2.inventory_id GROUP BY i2.film_id ORDER BY COUNT(*) DESC LIMIT 1);", 34],
-    ["대여 중인 영화는 몇 편인가요?", "SELECT COUNT(DISTINCT i.film_id) FROM inventory i JOIN rental r ON i.inventory_id = r.inventory_id WHERE r.return_date IS NULL;", 169],
-    ["반납된 대여 건수는?", "SELECT COUNT(*) FROM rental WHERE return_date IS NOT NULL;", 15861],
-    ["평균 대여 기간은 며칠인가요?", "SELECT ROUND(AVG(EXTRACT(DAY FROM (return_date - rental_date)))) FROM rental WHERE return_date IS NOT NULL;", 5],
-    ["가장 많이 대여된 카테고리는?", "SELECT c.name FROM category c JOIN film_category fc ON c.category_id = fc.category_id JOIN film f ON f.film_id = fc.film_id JOIN inventory i ON f.film_id = i.film_id JOIN rental r ON i.inventory_id = r.inventory_id GROUP BY c.name ORDER BY COUNT(r.rental_id) DESC LIMIT 1;", "Sports"],
-    ["Store 1의 평균 재고 수는?", "SELECT ROUND(COUNT(*)::numeric / COUNT(DISTINCT film_id), 2) FROM inventory WHERE store_id = 1;", 2.40],
-    
-    # 5. 매출 및 결제 분석 (15개) - 더 다양하게
-    ["고객의 평균 결제 금액은 얼마인가요?", "SELECT ROUND(AVG(amount), 2) FROM payment;", 4.20],
-    ["얼마나 결제를 해야 전체 유저 중에서 상위 10%에 해당할까?", "SELECT ROUND(percentile_disc(0.9) WITHIN GROUP (ORDER BY total_amount), 2) FROM (SELECT customer_id, SUM(amount) AS total_amount FROM payment GROUP BY customer_id) AS customer_totals;", 134.69],
-    ["결제가 가장 많이 일어난 시간대는?", "SELECT EXTRACT(HOUR FROM payment_date)::int FROM payment GROUP BY EXTRACT(HOUR FROM payment_date) ORDER BY COUNT(*) DESC LIMIT 1;", 13],
-    ["일별 평균 매출은?", "SELECT ROUND(AVG(daily_revenue), 2) FROM (SELECT DATE(payment_date) as date, SUM(amount) as daily_revenue FROM payment GROUP BY DATE(payment_date)) sub;", 4200.82],
-    ["가장 매출이 높았던 날의 매출액은?", "SELECT ROUND(MAX(daily_revenue), 2) FROM (SELECT DATE(payment_date) as date, SUM(amount) as daily_revenue FROM payment GROUP BY DATE(payment_date)) sub;", 6056.09],
-    ["결제 금액의 표준편차는?", "SELECT ROUND(STDDEV(amount)::numeric, 2) FROM payment;", 1.91],
-    ["스태프 1이 처리한 총 매출은?", "SELECT ROUND(SUM(amount), 2) FROM payment WHERE staff_id = 1;", 33927.04],
-    ["스태프 2가 처리한 총 매출은?", "SELECT ROUND(SUM(amount), 2) FROM payment WHERE staff_id = 2;", 27385.00],
-    ["가장 비싼 단일 결제 금액은?", "SELECT MAX(amount) FROM payment;", 11.99],
-    ["가장 저렴한 단일 결제 금액은?", "SELECT MIN(amount) FROM payment;", 0.00],
-    ["0.99달러 결제 건수는?", "SELECT COUNT(*) FROM payment WHERE amount = 0.99;", 580],
-    ["4.99달러 이상 결제 건수는?", "SELECT COUNT(*) FROM payment WHERE amount >= 4.99;", 5638],
-    ["고객당 평균 총 결제액은?", "SELECT ROUND(AVG(total), 2) FROM (SELECT customer_id, SUM(amount) as total FROM payment GROUP BY customer_id) sub;", 102.37],
-    ["2월에 발생한 매출은?", "SELECT ROUND(SUM(amount), 2) FROM payment WHERE EXTRACT(MONTH FROM payment_date) = 2;", 9631.88],
-    ["7월에 발생한 매출은?", "SELECT ROUND(SUM(amount), 2) FROM payment WHERE EXTRACT(MONTH FROM payment_date) = 7;", 28373.89],
-    
-    # 6. 배우 및 출연 분석 (10개) - 더 다양하게
-    ["출연 영화가 가장 많은 배우의 출연 영화 수는?", "SELECT COUNT(*) FROM film_actor WHERE actor_id = (SELECT actor_id FROM film_actor GROUP BY actor_id ORDER BY COUNT(*) DESC LIMIT 1);", 42],
-    ["배우당 평균 출연 영화 수는?", "SELECT ROUND(COUNT(*)::numeric / COUNT(DISTINCT actor_id), 2) FROM film_actor;", 27.34],
-    ["'Action' 카테고리에 출연한 배우는 몇 명인가요?", "SELECT COUNT(DISTINCT fa.actor_id) FROM film_actor fa JOIN film_category fc ON fa.film_id = fc.film_id JOIN category c ON fc.category_id = c.category_id WHERE c.name = 'Action';", 180],
-    ["가장 다양한 카테고리에 출연한 배우의 카테고리 수는?", "SELECT COUNT(DISTINCT fc.category_id) FROM film_actor fa JOIN film_category fc ON fa.film_id = fc.film_id WHERE fa.actor_id = (SELECT fa2.actor_id FROM film_actor fa2 JOIN film_category fc2 ON fa2.film_id = fc2.film_id GROUP BY fa2.actor_id ORDER BY COUNT(DISTINCT fc2.category_id) DESC LIMIT 1);", 16],
-    ["'R' 등급 영화에만 출연한 배우는 몇 명인가요?", "SELECT COUNT(DISTINCT fa.actor_id) FROM film_actor fa JOIN film f ON fa.film_id = f.film_id WHERE f.rating = 'R' AND fa.actor_id NOT IN (SELECT fa2.actor_id FROM film_actor fa2 JOIN film f2 ON fa2.film_id = f2.film_id WHERE f2.rating != 'R');", 0],
-    ["가장 긴 영화에 출연한 배우 수는?", "SELECT COUNT(*) FROM film_actor WHERE film_id = (SELECT film_id FROM film ORDER BY length DESC LIMIT 1);", 10],
-    ["가장 비싼 대여료 영화에 출연한 배우 수는?", "SELECT COUNT(*) FROM film_actor WHERE film_id IN (SELECT film_id FROM film WHERE rental_rate = (SELECT MAX(rental_rate) FROM film));", 3360],
-    ["평균 이상의 영화에 출연한 배우는 몇 명인가요?", "SELECT COUNT(DISTINCT actor_id) FROM film_actor WHERE actor_id IN (SELECT actor_id FROM film_actor GROUP BY actor_id HAVING COUNT(*) > (SELECT AVG(cnt) FROM (SELECT COUNT(*) as cnt FROM film_actor GROUP BY actor_id) sub));", 109],
-    ["단 1편의 영화에만 출연한 배우는 몇 명인가요?", "SELECT COUNT(*) FROM (SELECT actor_id FROM film_actor GROUP BY actor_id HAVING COUNT(*) = 1) sub;", 0],
-    ["가장 많이 대여된 영화에 출연한 배우 수는?", "SELECT COUNT(*) FROM film_actor WHERE film_id = (SELECT i.film_id FROM inventory i JOIN rental r ON i.inventory_id = r.inventory_id GROUP BY i.film_id ORDER BY COUNT(*) DESC LIMIT 1);", 12],
-    
-    # 7. 시간 및 트렌드 분석 (10개) - 더 다양하게
-    ["2005년에 발생한 대여 건수는?", "SELECT COUNT(*) FROM rental WHERE EXTRACT(YEAR FROM rental_date) = 2005;", 15862],
-    ["평일(월-금)에 발생한 대여 건수는?", "SELECT COUNT(*) FROM rental WHERE EXTRACT(DOW FROM rental_date) BETWEEN 1 AND 5;", 11475],
-    ["주말(토-일)에 발생한 대여 건수는?", "SELECT COUNT(*) FROM rental WHERE EXTRACT(DOW FROM rental_date) IN (0, 6);", 4569],
-    ["가장 대여가 많았던 날의 대여 건수는?", "SELECT COUNT(*) FROM rental WHERE DATE(rental_date) = (SELECT DATE(rental_date) FROM rental GROUP BY DATE(rental_date) ORDER BY COUNT(*) DESC LIMIT 1);", 335],
-    ["가장 대여가 적었던 날의 대여 건수는?", "SELECT COUNT(*) FROM rental WHERE DATE(rental_date) = (SELECT DATE(rental_date) FROM rental GROUP BY DATE(rental_date) ORDER BY COUNT(*) ASC LIMIT 1);", 1],
-    ["오전(0-11시)에 발생한 대여 건수는?", "SELECT COUNT(*) FROM rental WHERE EXTRACT(HOUR FROM rental_date) < 12;", 2649],
-    ["오후(12-23시)에 발생한 대여 건수는?", "SELECT COUNT(*) FROM rental WHERE EXTRACT(HOUR FROM rental_date) >= 12;", 13395],
-    ["월요일에 발생한 대여 건수는?", "SELECT COUNT(*) FROM rental WHERE EXTRACT(DOW FROM rental_date) = 1;", 2298],
-    ["토요일에 발생한 대여 건수는?", "SELECT COUNT(*) FROM rental WHERE EXTRACT(DOW FROM rental_date) = 6;", 2328],
-    ["평균 영화 길이는?", "SELECT ROUND(AVG(length), 2) FROM film;", 115.27]
+    # 1단계 - 단일 테이블에 대한 집계 및 단순 조건 조회 (예를 들어 SELECT, FROM, WHERE 하나씩 사용.)
+    # 모든 테이블당 2개의 질의응답 쌍 생성
+    ["이름이 Penelope인 배우는 총 몇 명인가?", "SELECT COUNT(*) FROM actor WHERE first_name = 'Penelope';", 4],
+    ["배우 데이터베이스에서 이름이 페넬로페인 사람의 수를 세어줘.", "SELECT COUNT(*) FROM actor WHERE first_name = 'Penelope';", 4],
+
+    ["California인 주소의 개수를 구해줘.", "SELECT COUNT(*) FROM address WHERE district = 'California';", 9],
+    ["캘리포니아 지역으로 등록된 주소가 몇 건인지 알려줘.", "SELECT COUNT(*) FROM address WHERE district = 'California';", 9],
+
+    ["카테고리 ID가 1번인 카테고리의 이름은 무엇인가?", "SELECT name FROM category WHERE category_id = 1;", 'Action'],
+    ["식별 번호가 1인 영화 장르를 알려줘.", "SELECT name FROM category WHERE category_id = 1;", 'Action'],
+
+    ["국가 ID가 44번인 도시의 총 개수는?", "SELECT COUNT(*) FROM city WHERE country_id = 44;", 60],
+    ["44번 국가 코드에 소속된 도시가 몇 군데인지 카운트해.", "SELECT COUNT(*) FROM city WHERE country_id = 44;", 60],
+
+    ["비활성 고객의 수를 세어줘.", "SELECT COUNT(*) FROM customer WHERE active = 0;", 15],
+    ["현재 활동 중이지 않은 손님은 총 몇 명이야?", "SELECT COUNT(*) FROM customer WHERE active = 0;", 15],
+
+    ["영화 테이블에서 상영 시간의 최댓값을 구해줘.", "SELECT MAX(length) FROM film;", 185],
+    ["등록된 영화 중 가장 긴 러닝타임은 몇 분이야?", "SELECT MAX(length) FROM film;", 185],
+
+    ["배우 ID가 1번인 배우가 출연한 영화의 총 편수는?", "SELECT COUNT(*) FROM film_actor WHERE actor_id = 1;", 19],
+    ["1번 배우와 연결된 영화 레코드는 몇 개가 있어?", "SELECT COUNT(*) FROM film_actor WHERE actor_id = 1;", 19],
+
+    ["카테고리 ID가 6번인 영화의 총 개수를 조회해.", "SELECT COUNT(*) FROM film_category WHERE category_id = 6;", 68],
+    ["6번 장르로 분류된 영화가 몇 편인지 숫자로 알려줘.", "SELECT COUNT(*) FROM film_category WHERE category_id = 6;", 68],
+
+    ["영화 ID가 1번인 영화의 전체 재고 수량은 몇 개인가?", "SELECT COUNT(*) FROM inventory WHERE film_id = 1;", 8],
+    ["매장에 있는 1번 영화의 총 개수를 세어줘.", "SELECT COUNT(*) FROM inventory WHERE film_id = 1;", 8],
+
+    ["언어 ID가 1번인 언어의 이름은?", "SELECT name FROM language WHERE language_id = 1;", 'English'],
+    ["1번 랭귀지 코드에 해당하는 언어 명칭을 출력해.", "SELECT name FROM language WHERE language_id = 1;", 'English'],
+
+    ["결제 테이블에서 가장 큰 금액은 얼마인가?", "SELECT MAX(amount) FROM payment;", 11.99],
+    ["지금까지 발생한 결제 내역 중 최고 액수를 알려줘.", "SELECT MAX(amount) FROM payment;", 11.99],
+
+    ["직원 ID가 1번인 직원이 처리한 대여 건수는 총 몇 개인가?", "SELECT COUNT(*) FROM rental WHERE staff_id = 1;", 8040],
+    ["1번 스태프가 담당했던 렌탈 기록의 총합을 구해줘.", "SELECT COUNT(*) FROM rental WHERE staff_id = 1;", 8040],
+
+    ["직원 ID가 2번인 직원의 이메일 주소는 무엇인가?", "SELECT email FROM staff WHERE staff_id = 2;", 'Jon.Stephens@sakilastaff.com'],
+    ["2번 사원의 이메일 정보를 하나만 딱 보여줘.", "SELECT email FROM staff WHERE staff_id = 2;", 'Jon.Stephens@sakilastaff.com'],
+
+    ["매장 ID가 1번인 매장의 매니저 직원 ID는 몇 번인가?", "SELECT manager_staff_id FROM store WHERE store_id = 1;", 1],
+    ["1호점을 관리하는 매니저의 사원 번호를 알려줘.", "SELECT manager_staff_id FROM store WHERE store_id = 1;", 1],
+
+    ["국가 테이블에 등록된 전체 국가 수는?", "SELECT COUNT(*) FROM country;", 109],
+    ["등록된 나라가 총 몇 개인지 알려줘.", "SELECT COUNT(*) FROM country;", 109],
+
+    ["대여료가 0.99달러인 영화는 몇 편인가?", "SELECT COUNT(*) FROM film WHERE rental_rate = 0.99;", 341],
+    ["렌탈 비용이 0.99달러로 설정된 영화의 총 개수를 구해줘.", "SELECT COUNT(*) FROM film WHERE rental_rate = 0.99;", 341],
+
+    # 2단계 - 다중 테이블 조인 및 복합 조건 조회 (예를 들어 JOIN, GROUP BY, HAVING, ORDER BY 등 추가 사용.)
+    # 조인 (film + language)
+    ["'Academy Dinosaur' 영화의 언어 이름은 무엇인가?", "SELECT L.name FROM film AS F JOIN language AS L ON F.language_id = L.language_id WHERE F.title = 'Academy Dinosaur';", 'English'],
+    ["제목이 'ACADEMY DINOSAUR'인 영화의 언어 명칭을 알려줘.", "SELECT L.name FROM film AS F JOIN language AS L ON F.language_id = L.language_id WHERE F.title = 'Academy Dinosaur';", 'English'],
+
+    # 조인 + 집계 (film_actor + actor)
+    ["배우 'Penelope Guiness'가 출연한 영화의 총 개수를 구해줘.", "SELECT COUNT(FA.film_id) FROM film_actor AS FA JOIN actor AS A ON FA.actor_id = A.actor_id WHERE A.first_name = 'Penelope' AND A.last_name = 'Guiness';", 19],
+    ["성(last_name)이 Guiness이고 이름이 Penelope인 배우가 출연한 영화는 총 몇 편인가?", "SELECT COUNT(FA.film_id) FROM film_actor AS FA JOIN actor AS A ON FA.actor_id = A.actor_id WHERE A.first_name = 'Penelope' AND A.last_name = 'Guiness';", 19],
+
+    # 그룹화 및 순서 (customer + payment)
+    ["가장 많은 금액을 지출한 고객의 고객 ID는 무엇인가?", "SELECT customer_id FROM payment GROUP BY customer_id ORDER BY SUM(amount) DESC LIMIT 1;", 148],
+    ["총 결제 금액이 가장 높은 고객의 식별 번호를 알려줘.", "SELECT customer_id FROM payment GROUP BY customer_id ORDER BY SUM(amount) DESC LIMIT 1;", 148],
+
+    # 조인 및 복합 조건 (customer + address + country + city)
+    ["Canada에 거주하는 고객의 총 수는 몇 명인가?", "SELECT COUNT(C.customer_id) FROM customer AS C JOIN address AS A ON C.address_id = A.address_id JOIN city AS CI ON A.city_id = CI.city_id JOIN country AS CO ON CI.country_id = CO.country_id WHERE CO.country = 'Canada';", 5],
+    ["'Canada' 국가에 주소를 둔 손님은 모두 몇 명인지 세어줘.", "SELECT COUNT(T1.customer_id) FROM customer AS T1 INNER JOIN address AS T2 ON T1.address_id = T2.address_id INNER JOIN city AS T3 ON T2.city_id = T3.city_id INNER JOIN country AS T4 ON T3.country_id = T4.country_id WHERE T4.country = 'Canada';", 5],
+
+    # 조인 및 필터링 (inventory + store)
+    ["직원 Mike Hillyer가 관리하는 매장의 총 재고 수량은 몇 개인가?", "SELECT COUNT(I.inventory_id) FROM inventory AS I JOIN store AS S ON I.store_id = S.store_id JOIN staff AS ST ON S.manager_staff_id = ST.staff_id WHERE ST.first_name = 'Mike' AND ST.last_name = 'Hillyer';", 2270],
+    ["매니저 이름이 'Mike Hillyer'인 매점의 재고 레코드는 총 몇 건인가?", "SELECT COUNT(T1.inventory_id) FROM inventory AS T1 INNER JOIN store AS T2 ON T1.store_id = T2.store_id INNER JOIN staff AS T3 ON T2.manager_staff_id = T3.staff_id WHERE T3.first_name = 'Mike' AND T3.last_name = 'Hillyer';", 2270],
+
+    # 그룹화 및 조건 (rental)
+    ["대여 건수가 가장 많은 직원의 ID는 무엇인가?", "SELECT staff_id FROM rental GROUP BY staff_id ORDER BY COUNT(rental_id) DESC LIMIT 1;", 1],
+    ["총 렌탈 건수가 가장 높은 직원 한 명의 식별 번호를 알려줘.", "SELECT staff_id FROM rental GROUP BY staff_id ORDER BY COUNT(rental_id) DESC LIMIT 1;", 1],
+
+    # 조인 및 정렬 (film + film_category + category)
+    ["'Action' 장르에 속하는 영화 중 상영 시간이 가장 긴 영화의 제목은?", "SELECT T1.title FROM film AS T1 INNER JOIN film_category AS T2 ON T1.film_id = T2.film_id INNER JOIN category AS T3 ON T2.category_id = T3.category_id WHERE T3.name = 'Action' ORDER BY T1.length DESC LIMIT 1;", 'Darn Forrester'],
+    ["액션 카테고리에 있는 영화 중 러닝타임이 제일 긴 영화 제목을 하나만 출력해.", "SELECT T1.title FROM film AS T1 INNER JOIN film_category AS T2 ON T1.film_id = T2.film_id INNER JOIN category AS T3 ON T2.category_id = T3.category_id WHERE T3.name = 'Action' ORDER BY T1.length DESC LIMIT 1;", 'Darn Forrester'],
+
+    # 조인 및 집계 (rental + payment)
+    ["2005년 5월에 발생한 총 결제 금액은 얼마인가?", "SELECT ROUND(SUM(P.amount), 2) FROM payment AS P WHERE EXTRACT(YEAR FROM P.payment_date) = 2005 AND EXTRACT(MONTH FROM P.payment_date) = 5;", 4824.43],
+    ["2005년 5월 한 달간의 결제 총액을 소수점 둘째 자리까지 알려줘.", "SELECT ROUND(SUM(P.amount), 2) FROM payment AS P WHERE EXTRACT(YEAR FROM P.payment_date) = 2005 AND EXTRACT(MONTH FROM P.payment_date) = 5;", 4824.43],
+
+    # 조인 및 그룹화 (film + inventory + rental)
+    ["가장 많이 대여된 영화 ID는 무엇인가?", "SELECT I.film_id FROM inventory AS I JOIN rental AS R ON I.inventory_id = R.inventory_id GROUP BY I.film_id ORDER BY COUNT(R.rental_id) DESC LIMIT 1;", 103],
+    ["렌탈 횟수가 가장 높은 영화의 식별 번호를 알려줘.", "SELECT I.film_id FROM inventory AS I JOIN rental AS R ON I.inventory_id = R.inventory_id GROUP BY I.film_id ORDER BY COUNT(R.rental_id) DESC LIMIT 1;", 103],
+
+    # 복합 조인 (city + address + customer)
+    ["'London' 도시에 거주하는 고객은 몇 명인가?", "SELECT COUNT(C.customer_id) FROM customer AS C JOIN address AS A ON C.address_id = A.address_id JOIN city AS CI ON A.city_id = CI.city_id WHERE CI.city = 'London';", 2],
+    ["런던에 주소를 둔 손님의 총 수를 세어줘.", "SELECT COUNT(C.customer_id) FROM customer AS C JOIN address AS A ON C.address_id = A.address_id JOIN city AS CI ON A.city_id = CI.city_id WHERE CI.city = 'London';", 2],
+
+    # 조인 및 평균 (payment + customer)
+    ["고객별 평균 결제 금액 중 가장 높은 금액은 얼마인가?", "SELECT ROUND(AVG(P.amount), 2) FROM payment AS P GROUP BY P.customer_id ORDER BY AVG(P.amount) DESC LIMIT 1;", 5.65],
+    ["손님 한 명당 평균 결제액이 가장 큰 고객의 평균 금액을 알려줘.", "SELECT ROUND(AVG(P.amount), 2) FROM payment AS P GROUP BY P.customer_id ORDER BY AVG(P.amount) DESC LIMIT 1;", 5.65],
+
+    # 조인 및 필터링 (film + film_category + category)
+    ["'Comedy' 장르 영화의 평균 대여료는 얼마인가?", "SELECT ROUND(AVG(F.rental_rate), 2) FROM film AS F JOIN film_category AS FC ON F.film_id = FC.film_id JOIN category AS C ON FC.category_id = C.category_id WHERE C.name = 'Comedy';", 3.16],
+    ["코미디 카테고리에 속한 영화들의 평균 렌탈 비용을 알려줘.", "SELECT ROUND(AVG(F.rental_rate), 2) FROM film AS F JOIN film_category AS FC ON F.film_id = FC.film_id JOIN category AS C ON FC.category_id = C.category_id WHERE C.name = 'Comedy';", 3.16],
+
+    # 조인 및 집계 (actor + film_actor + film)
+    ["배우 ID가 5번인 배우가 출연한 영화들의 평균 길이는?", "SELECT ROUND(AVG(F.length), 2) FROM film AS F JOIN film_actor AS FA ON F.film_id = FA.film_id WHERE FA.actor_id = 5;", 111.77],
+    ["5번 배우가 출연한 영화들의 평균 상영 시간을 구해줘.", "SELECT ROUND(AVG(F.length), 2) FROM film AS F JOIN film_actor AS FA ON F.film_id = FA.film_id WHERE FA.actor_id = 5;", 111.77],
+
+    # 조인 및 그룹화 (rental + customer)
+    ["대여 횟수가 30회 이상인 고객은 몇 명인가?", "SELECT COUNT(DISTINCT R.customer_id) FROM rental AS R GROUP BY R.customer_id HAVING COUNT(R.rental_id) >= 30;", 236],
+    ["렌탈을 30번 이상 한 손님의 총 수를 알려줘.", "SELECT COUNT(DISTINCT R.customer_id) FROM rental AS R GROUP BY R.customer_id HAVING COUNT(R.rental_id) >= 30;", 236],
+
 ]
 
 if __name__=="__main__":
